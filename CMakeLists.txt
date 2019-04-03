@@ -1,9 +1,4 @@
-# For more information about using CMake with Android Studio, read the
-# documentation: https://d.android.com/studio/projects/add-native-code.html
-
-# Sets the minimum version of CMake required to build the native library.
-
-cmake_minimum_required(VERSION 3.4.1)
+cmake_minimum_required (VERSION 3.7)
 set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
 # OpenCV setup
@@ -29,7 +24,6 @@ message(STATUS "OpenCV include_directories: ${OCV_INCLUDE_DIR}")
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
 # You can define multiple libraries, and CMake builds them for you.
-# Gradle automatically packages shared libraries with your APK.
 
 set(parent_DIR ${CMAKE_SOURCE_DIR})
 set(include_DIR ${parent_DIR}/opencv/include)
@@ -39,40 +33,65 @@ include_directories(
         ${include_DIR}/opencv2
         ${OCV_INCLUDE_DIR})
 
-add_library( # Sets the name of the library.
-        native-lib
+set(LIBRARY_SOURCE
+    ${CMAKE_CURRENT_LIST_DIR}/Foo.hh
+    ${CMAKE_CURRENT_LIST_DIR}/Foo.cpp
+)
 
-        # Sets the library as a shared library.
-        SHARED
+add_library(
+    ${FRAMEWORK_NAME} SHARED
+    ${LIBRARY_SOURCE}
+)
 
-        # Provides a relative path to your source file(s).
-        src/main/cpp/native-lib.cpp)
+target_link_libraries(
+    ${FRAMEWORK_NAME}
 
-# Searches for a specified prebuilt library and stores the path as a
-# variable. Because CMake includes system libraries in the search path by
-# default, you only need to specify the name of the public NDK library
-# you want to add. CMake verifies that the library exists before
-# completing its build.
+    # OpenCV
+    ${OCV_3RDPARTY}
+    ${OCV_MODULES}
+    ${OCV_EXTRA}
 
-find_library( # Sets the name of the path variable.
-        log-lib
+)
 
-        # Specifies the name of the NDK library that
-        # you want CMake to locate.
-        log)
+set(CMAKE_SHARED_LINKER_FLAGS "-Wall")
 
-# Specifies libraries CMake should link to your target library. You
-# can link multiple libraries, such as libraries you define in this
-# build script, prebuilt third-party libraries, or system libraries.
+set_target_properties(
+    ${FRAMEWORK_NAME} PROPERTIES
+    FRAMEWORK TRUE
+    FRAMEWORK_VERSION A
+    MACOSX_FRAMEWORK_IDENTIFIER ${FRAMEWORK_BUNDLE_IDENTIFIER}
+    MACOSX_FRAMEWORK_INFO_PLIST ${CMAKE_CURRENT_LIST_DIR}/framework.plist.in
+    # "current version" in semantic format in Mach-O binary file
+    VERSION 1.0.0
+    # "compatibility version" in semantic format in Mach-O binary file
+    SOVERSION 1.0.0
+    PUBLIC_HEADER "${CMAKE_CURRENT_LIST_DIR}/Foo.hh"
+    XCODE_ATTRIBUTE_IPHONEOS_DEPLOYMENT_TARGET ${DEPLOYMENT_TARGET}
+    XCODE_ATTRIBUTE_CODE_SIGN_IDENTITY ${CODE_SIGN_IDENTITY}
+    XCODE_ATTRIBUTE_DEVELOPMENT_TEAM ${DEVELOPMENT_TEAM_ID}
+    XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY ${DEVICE_FAMILY}
+    XCODE_ATTRIBUTE_SKIP_INSTALL "YES"
+)
 
-target_link_libraries( # Specifies the target library.
-        native-lib
+# Symbol visibility setup, COMPILE_FLAGS only affect C++ so for Objective C we
+# have to use XCODE_ATTRIBUTE_OTHER_CFLAGS.
+set_target_properties(
+    ${FRAMEWORK_NAME} PROPERTIES
+    COMPILE_FLAGS "-fvisibility=hidden -fvisibility-inlines-hidden"
+    XCODE_ATTRIBUTE_OTHER_CFLAGS "-fvisibility=hidden -fvisibility-inlines-hidden")
 
-        # OpenCV
-        ${OCV_3RDPARTY}
-        ${OCV_MODULES}
-        ${OCV_EXTRA}
+# set_target_properties(${FRAMEWORK_NAME} PROPERTIES COMPILE_FLAGS "-x c++")
 
-        # Links the target library to the log library
-        # included in the NDK.
-        ${log-lib})
+add_custom_command(
+    TARGET ${FRAMEWORK_NAME}
+    POST_BUILD
+    COMMAND /bin/bash -c "${CMAKE_CURRENT_LIST_DIR}/install_name.sh \${BUILT_PRODUCTS_DIR}/\${PRODUCT_NAME}.framework/\${PRODUCT_NAME}"
+)
+
+add_custom_command(
+    TARGET ${FRAMEWORK_NAME}
+    POST_BUILD
+    COMMAND install_name_tool -id \"@rpath/\${PRODUCT_NAME}.framework/\${PRODUCT_NAME}\"
+    \${BUILT_PRODUCTS_DIR}/\${PRODUCT_NAME}.framework/\${PRODUCT_NAME}
+)
+
