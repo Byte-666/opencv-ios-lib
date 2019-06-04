@@ -108,7 +108,7 @@ ocv_clear_vars(OpenCVModules_TARGETS)
 # ----------------------------------------------------------------------------
 # Break in case of popular CMake configuration mistakes
 # ----------------------------------------------------------------------------
-if(NOT CMAKE_SIZEOF_VOID_P GREATER 0)
+if(NOT APPLE AND NOT CMAKE_SIZEOF_VOID_P GREATER 0)
   message(FATAL_ERROR "CMake fails to deterimine the bitness of target platform.
   Please check your CMake and compiler installation. If you are crosscompiling then ensure that your CMake toolchain file correctly sets the compiler details.")
 endif()
@@ -402,7 +402,9 @@ else()
     ocv_update(OPENCV_OTHER_INSTALL_PATH   share/OpenCV)
 
     if(NOT DEFINED OPENCV_CONFIG_INSTALL_PATH)
-      math(EXPR SIZEOF_VOID_P_BITS "8 * ${CMAKE_SIZEOF_VOID_P}")
+      if(NOT APPLE)
+        math(EXPR SIZEOF_VOID_P_BITS "8 * ${CMAKE_SIZEOF_VOID_P}")
+      endif()
       if(LIB_SUFFIX AND NOT SIZEOF_VOID_P_BITS EQUAL LIB_SUFFIX)
         ocv_update(OPENCV_CONFIG_INSTALL_PATH lib${LIB_SUFFIX}/cmake/opencv)
       else()

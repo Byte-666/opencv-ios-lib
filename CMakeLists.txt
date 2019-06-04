@@ -3,6 +3,24 @@ set(CMAKE_VERBOSE_MAKEFILE TRUE)
 
 # OpenCV setup
 
+macro(FW_OPTION variable value)
+    unset(${variable} CACHE)
+    option(${variable} ${value})
+endmacro()
+
+#set(OPENCV_FPON6_DISABLE ON)
+FW_OPTION(BUILD_FAT_JAVA_LIB "fat" OFF)
+FW_OPTION(BUILD_opencv_apps "opencv_apps" OFF) 
+FW_OPTION(BUILD_SHARED_LIBS OFF)
+FW_OPTION(BUILD_OPENCV_WORLD ON)
+FW_OPTION(BUILD_TESTS OFF)
+FW_OPTION(BUILD_EXAMPLES OFF)
+FW_OPTION(BUILD_PERF_TESTS OFF)
+FW_OPTION(BUILD_JPEG ON)
+FW_OPTION(BUILD_JASPER ON)
+FW_OPTION(BUILD_PNG ON)
+FW_OPTION(WITH_TBB ON)
+
 add_subdirectory(opencv)
 find_library(OpenCV REQUIRED)
 
@@ -28,10 +46,10 @@ message(STATUS "OpenCV include_directories: ${OCV_INCLUDE_DIR}")
 set(parent_DIR ${CMAKE_SOURCE_DIR})
 set(include_DIR ${parent_DIR}/opencv/include)
 include_directories(
-        ${include_DIR}
-        ${include_DIR}/opencv
-        ${include_DIR}/opencv2
-        ${OCV_INCLUDE_DIR})
+    ${include_DIR}
+    ${include_DIR}/opencv
+    ${include_DIR}/opencv2
+    ${OCV_INCLUDE_DIR})
 
 set(LIBRARY_SOURCE
     ${CMAKE_CURRENT_LIST_DIR}/Foo.hh
