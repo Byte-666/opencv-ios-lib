@@ -8,7 +8,7 @@ macro(FW_OPTION variable value)
     option(${variable} ${value})
 endmacro()
 
-#set(OPENCV_FPON6_DISABLE ON)
+#FW_OPTION(OPENCV_FPON6_DISABLE ON)
 FW_OPTION(BUILD_FAT_JAVA_LIB "fat" OFF)
 FW_OPTION(BUILD_opencv_apps "opencv_apps" OFF) 
 FW_OPTION(BUILD_SHARED_LIBS OFF)
@@ -23,11 +23,13 @@ FW_OPTION(WITH_TBB ON)
 
 add_subdirectory(opencv)
 find_library(OpenCV REQUIRED)
-
 # find_package(OpenCV REQUIRED)
 
 ocv_get_all_libs(OCV_MODULES OCV_EXTRA OCV_3RDPARTY)
-message(STATUS "OpenCV libraries: ${OCV_MODULES}")
+message(STATUS "OpenCV libraries:")
+foreach(m ${OCV_MODULES})
+    message(STATUS "    ${m}")
+endforeach()
 
 set(OCV_INCLUDE_DIR "")
 foreach(m ${OCV_MODULES})
@@ -37,7 +39,10 @@ foreach(m ${OCV_MODULES})
 endforeach()
 ocv_list_unique(OCV_INCLUDE_DIR)
 ocv_list_reverse(OCV_INCLUDE_DIR)
-message(STATUS "OpenCV include_directories: ${OCV_INCLUDE_DIR}")
+message(STATUS "OpenCV include_directories: ")
+foreach(i ${OCV_INCLUDE_DIR})
+    message(STATUS "    ${i}")
+endforeach()
 
 # Creates and names a library, sets it as either STATIC
 # or SHARED, and provides the relative paths to its source code.
